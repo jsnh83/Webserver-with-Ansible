@@ -1,0 +1,42 @@
+- name: Configure Web Server
+  hosts: all
+  tasks:
+        - block:
+                - name: Install WebServer
+                  yum:
+                      name: httpd
+                      state: present
+              
+                - name: Configure Custom Document file
+                  template:
+                        src: index.html.j2
+                        dest: /var/www/html/index.html
+         
+                - name: Configure Custom Configuration file
+                  copy:
+                       content: |
+                               <VirtualHost *:80> 
+                               ServerName lab.example.com
+                               DocumentRoot /var/www/html
+                               </VirtualHost>
+                       dest: /etc/httpd/conf.d/custom.conf
+                
+                - name: Start and Enable Service
+                  service:
+                        name: httpd
+                        state: started
+                        enabled: yes
+           
+                - name: Allow firewall for WebServer
+                  firewalld:
+                         service: http
+                         state: enabled
+                         immediate: yes
+                         permanent: yes
+          when: ansible_distribution == 'CentOS' and ansible_distribution_version == '7.9' 
+          rescue:
+                 - debug:
+                       msg: "You Have Need to Verify Configuration"
+          when: ansible_distribution == 'CentOS' and ansible_distribution_version == '7.9'
+
+
